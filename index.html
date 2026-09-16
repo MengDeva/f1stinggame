@@ -1,0 +1,1406 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+
+    <title>F1 Starting Lights Reaction Test</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+      /* =========================================================
+   RESET
+========================================================= */
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        /* width: 100%;
+        height: 100%; */
+        margin: 0;
+        padding: 0;
+
+        /* overflow: hidden; */
+      }
+
+      body {
+        background:
+          radial-gradient(
+            circle at 50% 0%,
+            rgba(90, 0, 0, 0.25),
+            transparent 35%
+          ),
+          linear-gradient(180deg, #090a0d 0%, #050506 100%);
+
+        color: white;
+
+        font-family: Arial, Helvetica, sans-serif;
+
+        -webkit-tap-highlight-color: transparent;
+
+        user-select: none;
+      }
+
+      /* =========================================================
+   APP
+========================================================= */
+
+      #app {
+        display: flex;
+
+        flex-direction: column;
+
+        align-items: center;
+
+        justify-content: center;
+
+        padding: clamp(15px, 3vh, 35px) 15px;
+
+        overflow: hidden;
+      }
+
+      /* =========================================================
+   STATUS
+========================================================= */
+
+      #status {
+        position: absolute;
+
+        top: clamp(12px, 3vh, 25px);
+
+        left: 50%;
+
+        transform: translateX(-50%);
+
+        width: max-content;
+
+        max-width: 90vw;
+
+        text-align: center;
+
+        font-size: clamp(9px, 1.2vw, 13px);
+
+        font-weight: 800;
+
+        letter-spacing: 2px;
+
+        text-transform: uppercase;
+
+        z-index: 10;
+
+        transition: color 0.15s ease;
+      }
+
+      #status.ready {
+        color: #888;
+      }
+
+      #status.waiting {
+        color: #fff;
+      }
+
+      #status.go {
+        color: #ff3333;
+
+        text-shadow: 0 0 12px rgba(255, 0, 0, 0.6);
+      }
+
+      #status.error {
+        color: #ff1111;
+
+        text-shadow: 0 0 15px rgba(255, 0, 0, 0.8);
+      }
+
+      /* =========================================================
+   F1 GANTRY
+========================================================= */
+
+      .lights {
+        width: min(700px, 92vw);
+
+        display: grid;
+
+        grid-template-columns: repeat(5, 1fr);
+
+        gap: clamp(7px, 1.2vw, 14px);
+      }
+
+      /* =========================================================
+   LIGHT COLUMN
+========================================================= */
+
+      .light-column {
+        background: linear-gradient(180deg, #030303, #111111);
+
+        border: 1px solid #222;
+
+        border-radius: clamp(12px, 2vw, 20px);
+
+        padding: clamp(8px, 1.5vw, 15px);
+
+        display: flex;
+
+        flex-direction: column;
+
+        /*
+    IMPORTANT:
+
+    We only have 2 active red lights
+    at the bottom.
+
+    The 2 lights above are optional.
+  */
+
+        gap: clamp(8px, 1.2vw, 14px);
+
+        box-shadow:
+          0 10px 30px rgba(0, 0, 0, 0.5),
+          inset 0 1px 0 rgba(255, 255, 255, 0.03);
+      }
+
+      /* =========================================================
+   BASE LIGHT
+========================================================= */
+
+      .light {
+        width: 100%;
+
+        aspect-ratio: 1 / 1;
+
+        border-radius: 50%;
+
+        background: radial-gradient(
+          circle,
+          #292929 0%,
+          #181818 70%,
+          #101010 100%
+        );
+
+        border: 2px solid #303030;
+
+        box-shadow: inset 0 3px 8px rgba(0, 0, 0, 0.8);
+
+        transition:
+          background 0.06s ease,
+          box-shadow 0.06s ease,
+          transform 0.06s ease,
+          opacity 0.2s ease;
+      }
+
+      /* =========================================================
+   OPTIONAL TOP LIGHTS
+========================================================= */
+
+      /*
+   These are OPTIONAL.
+
+   Add class "optional"
+   to hide them.
+
+   Remove "optional"
+   if you want to display them.
+*/
+
+      .light.optional {
+        opacity: 0;
+
+        pointer-events: none;
+      }
+
+      /* =========================================================
+   OPTIONAL TOP LIGHT — RED
+========================================================= */
+
+      .light.top-red.on {
+        background: radial-gradient(
+          circle at 35% 30%,
+          #ffffff 0%,
+          #ffaaaa 6%,
+          #ff3030 20%,
+          #ed0000 45%,
+          #8b0000 75%,
+          #4b0000 100%
+        );
+
+        border-color: #ff5555;
+
+        box-shadow:
+          0 0 8px #ff0000,
+          0 0 20px #ff0000,
+          0 0 40px rgba(255, 0, 0, 0.75),
+          inset 0 0 12px rgba(255, 255, 255, 0.35);
+
+        transform: scale(1.025);
+      }
+
+      /* =========================================================
+   BOTTOM RED LIGHTS
+========================================================= */
+
+      .light.red.on {
+        background: radial-gradient(
+          circle at 35% 30%,
+          #ffffff 0%,
+          #ffb0b0 6%,
+          #ff4040 18%,
+          #ff1111 38%,
+          #d90000 60%,
+          #700000 100%
+        );
+
+        border-color: #ff6868;
+
+        box-shadow:
+          0 0 8px #ff0000,
+          0 0 22px #ff0000,
+          0 0 45px rgba(255, 0, 0, 0.8),
+          inset 0 0 12px rgba(255, 255, 255, 0.4);
+
+        transform: scale(1.025);
+      }
+
+      /* =========================================================
+   REACTION TIME
+========================================================= */
+
+      #reaction {
+        margin-top: clamp(20px, 4vh, 10px);
+
+        font-size: clamp(60px, 10vw, 120px);
+
+        line-height: 0.85;
+
+        font-weight: 500;
+
+        letter-spacing: -0.01em;
+
+        font-variant-numeric: tabular-nums;
+
+        color: #ffffff;
+
+        text-shadow: 0 4px 25px rgba(0, 0, 0, 0.5);
+
+        white-space: nowrap;
+
+        transition: color 0.15s ease;
+      }
+
+      /* =========================================================
+   ERROR
+========================================================= */
+
+      #reaction.error {
+        color: #ff1a1a;
+
+        font-size: clamp(50px, 8vw, 120px);
+
+        letter-spacing: -0.03em;
+
+        text-shadow: 0 0 25px rgba(255, 0, 0, 0.5);
+      }
+
+      /* =========================================================
+   INSTRUCTIONS
+========================================================= */
+
+      .instructions {
+        margin-top: clamp(18px, 3vh, 30px);
+
+        text-align: center;
+
+        max-width: 700px;
+
+        color: #b5b5b5;
+
+        font-size: clamp(11px, 1.5vw, 16px);
+
+        line-height: 1.4;
+      }
+
+      /* =========================================================
+   START BUTTON
+========================================================= */
+
+      #startButton {
+        margin-top: clamp(18px, 3vh, 28px);
+
+        padding: 12px 32px;
+
+        border: 1px solid #ff2020;
+
+        border-radius: 999px;
+
+        background: #c90000;
+
+        color: #ffffff;
+
+        font-size: clamp(10px, 1.2vw, 13px);
+
+        font-weight: 800;
+
+        letter-spacing: 1.5px;
+
+        text-transform: uppercase;
+
+        cursor: pointer;
+
+        box-shadow: 0 0 12px rgba(255, 0, 0, 0.25);
+
+        transition:
+          transform 0.15s ease,
+          background 0.15s ease;
+      }
+
+      #startButton:hover {
+        background: #ed0000;
+
+        transform: translateY(-2px);
+
+        box-shadow: 0 0 22px rgba(255, 0, 0, 0.45);
+      }
+
+      #startButton:active {
+        transform: scale(0.96);
+      }
+
+      #startButton:disabled {
+        opacity: 0.45;
+
+        cursor: default;
+
+        transform: none;
+      }
+
+      /* =========================================================
+   KEYBOARD
+========================================================= */
+
+      .keyboard-hint {
+        margin-top: 8px;
+
+        color: #666;
+
+        font-size: 10px;
+
+        text-align: center;
+      }
+
+      kbd {
+        padding: 2px 6px;
+
+        border: 1px solid #333;
+
+        border-radius: 4px;
+
+        background: #151515;
+
+        color: #aaa;
+
+        font-size: 9px;
+      }
+
+      /* =========================================================
+   LEADERBOARD
+========================================================= */
+
+      .leaderboard {
+        width: min(400px, 90vw);
+
+        margin-top: clamp(20px, 3vh, 35px);
+
+        padding-top: 12px;
+
+        border-top: 1px solid #222;
+      }
+
+      .leaderboard-header {
+        display: flex;
+
+        justify-content: space-between;
+
+        align-items: center;
+
+        margin-bottom: 4px;
+      }
+
+      .leaderboard-title {
+        font-size: 10px;
+
+        font-weight: 800;
+
+        letter-spacing: 2px;
+
+        text-transform: uppercase;
+
+        color: #888;
+      }
+
+      #resetButton {
+        border: 0;
+
+        background: none;
+
+        color: #555;
+
+        font-size: 9px;
+
+        font-weight: 700;
+
+        letter-spacing: 1px;
+
+        text-transform: uppercase;
+
+        cursor: pointer;
+      }
+
+      #resetButton:hover {
+        color: #ff3333;
+      }
+
+      /* =========================================================
+   SCORE
+========================================================= */
+
+      .score {
+        display: flex;
+
+        align-items: center;
+
+        justify-content: space-between;
+
+        padding: 5px 2px;
+
+        border-bottom: 1px solid #151515;
+
+        font-size: 11px;
+      }
+
+      .score-left {
+        display: flex;
+
+        align-items: center;
+
+        gap: 10px;
+      }
+
+      .score-rank {
+        width: 15px;
+
+        color: #555;
+      }
+
+      .score-name {
+        color: #ccc;
+
+        font-weight: 600;
+      }
+
+      .score-time {
+        color: #fff;
+
+        font-weight: 800;
+
+        font-variant-numeric: tabular-nums;
+      }
+
+      .empty-score {
+        padding: 7px 0;
+
+        color: #555;
+
+        font-size: 10px;
+      }
+
+      /* =========================================================
+   FLASH
+========================================================= */
+
+      body.flash-red {
+        animation: flashRed 0.3s ease;
+      }
+
+      @keyframes flashRed {
+        0% {
+          background-color: rgba(150, 0, 0, 0.3);
+        }
+
+        100% {
+          background-color: transparent;
+        }
+      }
+
+      /* =========================================================
+   MOBILE
+========================================================= */
+
+      @media (max-width: 600px) {
+        #app {
+          padding: 15px 8px;
+        }
+
+        .lights {
+          width: 96vw;
+
+          gap: 4px;
+        }
+
+        .light-column {
+          padding: 7px 4px;
+
+          gap: 7px;
+
+          border-radius: 10px;
+        }
+
+        #reaction {
+          font-size: 22vw;
+        }
+
+        .instructions {
+          max-width: 95vw;
+
+          font-size: 11px;
+        }
+
+        #startButton {
+          padding: 10px 26px;
+        }
+
+        .leaderboard {
+          width: 85vw;
+        }
+      }
+
+      /* =========================================================
+   SMALL HEIGHT DEVICES
+========================================================= */
+
+      @media (max-height: 650px) {
+        #app {
+          padding-top: 10px;
+
+          padding-bottom: 10px;
+        }
+
+        .light-column {
+          gap: 5px;
+
+          padding: 5px 4px;
+        }
+
+        #reaction {
+          margin-top: 18px;
+
+          font-size: clamp(55px, 12vh, 100px);
+        }
+
+        .instructions {
+          margin-top: 12px;
+        }
+
+        #startButton {
+          margin-top: 12px;
+        }
+
+        .leaderboard {
+          margin-top: 12px;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="app">
+      <!-- STATUS -->
+
+      <!-- =====================================================
+       F1 GANTRY
+
+       EACH COLUMN:
+
+       OPTIONAL TOP LIGHT
+       OPTIONAL TOP LIGHT
+       RED
+       RED
+
+       The top two lights are hidden by default.
+
+       To show them, remove "optional"
+       from their class.
+  ====================================================== -->
+      <div class="flex flex-row justify-center">
+        <div class="items-center justify-center flex flex-col gap-5">
+          <img src="./public/Logo.png" alt="Logo" width="240" height="400" />
+          <img
+            class="h-14 pb-3"
+            src="./public/tagline.png"
+            alt="Logo"
+            width="auto"
+            height="30"
+          />
+        </div>
+      </div>
+      <div id="status" class="ready"></div>
+      <div class="lights">
+        <!-- COLUMN 1 -->
+
+        <div class="light-column">
+          <div class="light top-red"></div>
+
+          <div class="light top-red"></div>
+
+          <div class="light red"></div>
+
+          <div class="light red"></div>
+        </div>
+
+        <!-- COLUMN 2 -->
+
+        <div class="light-column">
+          <div class="light top-red"></div>
+
+          <div class="light top-red"></div>
+
+          <div class="light red"></div>
+
+          <div class="light red"></div>
+        </div>
+
+        <!-- COLUMN 3 -->
+
+        <div class="light-column">
+          <div class="light top-red"></div>
+
+          <div class="light top-red"></div>
+
+          <div class="light red"></div>
+
+          <div class="light red"></div>
+        </div>
+
+        <!-- COLUMN 4 -->
+
+        <div class="light-column">
+          <div class="light top-red"></div>
+
+          <div class="light top-red"></div>
+
+          <div class="light red"></div>
+
+          <div class="light red"></div>
+        </div>
+
+        <!-- COLUMN 5 -->
+
+        <div class="light-column">
+          <div class="light top-red"></div>
+
+          <div class="light top-red"></div>
+
+          <div class="light red"></div>
+
+          <div class="light red"></div>
+        </div>
+      </div>
+
+      <!-- REACTION -->
+
+      <div id="reaction">0.000</div>
+
+      <!-- START -->
+
+      <button id="startButton" type="button">Start</button>
+
+      <!-- LEADERBOARD -->
+
+      <div class="leaderboard">
+        <div class="leaderboard-header">
+          <div class="leaderboard-title">Fastest Reactions</div>
+
+          <button id="resetButton" type="button">Reset</button>
+        </div>
+
+        <div id="scores"></div>
+      </div>
+    </div>
+
+    <script>
+      /* =========================================================
+   F1 REACTION TEST
+========================================================= */
+
+      /* =========================================================
+   ELEMENTS
+========================================================= */
+
+      const app = document.getElementById("app");
+
+      const columns = document.querySelectorAll(".light-column");
+
+      const allLights = document.querySelectorAll(".light");
+
+      const startButton = document.getElementById("startButton");
+
+      const resetButton = document.getElementById("resetButton");
+
+      const status = document.getElementById("status");
+
+      const reaction = document.getElementById("reaction");
+
+      const scores = document.getElementById("scores");
+
+      /* =========================================================
+   GAME STATE
+========================================================= */
+
+      let state = "idle";
+
+      let currentColumn = 0;
+
+      let columnTimer = null;
+
+      let lightsOutTimer = null;
+
+      let lightsOutTime = 0;
+
+      /*
+  Possible states:
+
+  idle
+  countdown
+  waiting
+  go
+  finished
+  falseStart
+*/
+
+      /* =========================================================
+   AUDIO
+========================================================= */
+
+      let audioContext = null;
+
+      /* =========================================================
+   STORAGE
+========================================================= */
+
+      const STORAGE_KEY = "f1-reaction-leaderboard";
+
+      /* =========================================================
+   AUDIO INIT
+========================================================= */
+
+      function initAudio() {
+        if (!audioContext) {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+
+          if (!AudioContext) {
+            return;
+          }
+
+          audioContext = new AudioContext();
+        }
+
+        if (audioContext.state === "suspended") {
+          audioContext.resume();
+        }
+      }
+
+      /* =========================================================
+   LIGHT BEEP
+========================================================= */
+
+      function playBeep(index) {
+        if (!audioContext) {
+          return;
+        }
+
+        const now = audioContext.currentTime;
+
+        const oscillator = audioContext.createOscillator();
+
+        const gain = audioContext.createGain();
+
+        oscillator.type = "square";
+
+        oscillator.frequency.setValueAtTime(400 + index * 70, now);
+
+        gain.gain.setValueAtTime(0.0001, now);
+
+        gain.gain.exponentialRampToValueAtTime(0.12, now + 0.01);
+
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.12);
+
+        oscillator.connect(gain);
+
+        gain.connect(audioContext.destination);
+
+        oscillator.start(now);
+
+        oscillator.stop(now + 0.13);
+      }
+
+      /* =========================================================
+   LIGHTS OUT SOUND
+========================================================= */
+
+      function playLightsOut() {
+        if (!audioContext) {
+          return;
+        }
+
+        const now = audioContext.currentTime;
+
+        const osc = audioContext.createOscillator();
+
+        const gain = audioContext.createGain();
+
+        osc.type = "sawtooth";
+
+        osc.frequency.setValueAtTime(1800, now);
+
+        osc.frequency.exponentialRampToValueAtTime(180, now + 0.5);
+
+        gain.gain.setValueAtTime(0.0001, now);
+
+        gain.gain.exponentialRampToValueAtTime(0.28, now + 0.01);
+
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.55);
+
+        osc.connect(gain);
+
+        gain.connect(audioContext.destination);
+
+        osc.start(now);
+
+        osc.stop(now + 0.6);
+
+        /* High-frequency layer */
+
+        const high = audioContext.createOscillator();
+
+        const highGain = audioContext.createGain();
+
+        high.type = "triangle";
+
+        high.frequency.setValueAtTime(2400, now);
+
+        high.frequency.exponentialRampToValueAtTime(500, now + 0.35);
+
+        highGain.gain.setValueAtTime(0.0001, now);
+
+        highGain.gain.exponentialRampToValueAtTime(0.1, now + 0.01);
+
+        highGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.4);
+
+        high.connect(highGain);
+
+        highGain.connect(audioContext.destination);
+
+        high.start(now);
+
+        high.stop(now + 0.45);
+      }
+
+      /* =========================================================
+   FALSE START SOUND
+========================================================= */
+
+      function playError() {
+        if (!audioContext) {
+          return;
+        }
+
+        const now = audioContext.currentTime;
+
+        const osc = audioContext.createOscillator();
+
+        const gain = audioContext.createGain();
+
+        osc.type = "sawtooth";
+
+        osc.frequency.setValueAtTime(150, now);
+
+        osc.frequency.exponentialRampToValueAtTime(65, now + 0.3);
+
+        gain.gain.setValueAtTime(0.0001, now);
+
+        gain.gain.exponentialRampToValueAtTime(0.3, now + 0.01);
+
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.35);
+
+        osc.connect(gain);
+
+        gain.connect(audioContext.destination);
+
+        osc.start(now);
+
+        osc.stop(now + 0.4);
+      }
+
+      /* =========================================================
+   CLEAR LIGHTS
+========================================================= */
+
+      function clearLights() {
+        allLights.forEach((light) => {
+          light.classList.remove("on");
+        });
+      }
+
+      /* =========================================================
+   ACTIVATE COLUMN
+========================================================= */
+
+      function activateColumn(index) {
+        const column = columns[index];
+
+        if (!column) {
+          return;
+        }
+
+        /*
+    Only the 2 RED lights
+    are activated.
+
+    Optional top lights remain
+    inactive unless you choose
+    to add them to the sequence.
+  */
+
+        const redLights = column.querySelectorAll(".red");
+
+        redLights.forEach((light) => {
+          light.classList.add("on");
+        });
+
+        playBeep(index);
+      }
+
+      /* =========================================================
+   START GAME
+========================================================= */
+
+      function startGame() {
+        if (state === "countdown" || state === "waiting" || state === "go") {
+          return;
+        }
+
+        initAudio();
+
+        clearInterval(columnTimer);
+
+        clearTimeout(lightsOutTimer);
+
+        clearLights();
+
+        currentColumn = 0;
+
+        state = "countdown";
+
+        reaction.textContent = "0.000";
+
+        reaction.classList.remove("error");
+
+        status.textContent = "";
+
+        status.className = "waiting";
+
+        startButton.disabled = true;
+
+        startButton.textContent = "Lights Starting";
+
+        /*
+    First red pair.
+  */
+
+        activateColumn(currentColumn);
+
+        currentColumn++;
+
+        /*
+    Next pair every 1 second.
+  */
+
+        columnTimer = setInterval(() => {
+          if (currentColumn >= 5) {
+            clearInterval(columnTimer);
+
+            columnTimer = null;
+
+            randomDelay();
+
+            return;
+          }
+
+          activateColumn(currentColumn);
+
+          currentColumn++;
+        }, 1000);
+      }
+
+      /* =========================================================
+   RANDOM DELAY
+========================================================= */
+
+      function randomDelay() {
+        state = "waiting";
+
+        status.textContent = "";
+
+        status.className = "waiting";
+
+        /*
+    1.5 - 4 seconds
+  */
+
+        const delay = 1500 + Math.random() * 2500;
+
+        lightsOutTimer = setTimeout(lightsOut, delay);
+      }
+
+      /* =========================================================
+   LIGHTS OUT
+========================================================= */
+
+      function lightsOut() {
+        if (state !== "waiting") {
+          return;
+        }
+
+        /*
+    ALL RED LIGHTS OFF
+    AT EXACTLY THE SAME TIME
+  */
+
+        clearLights();
+
+        state = "go";
+
+        lightsOutTime = performance.now();
+
+        status.textContent = "";
+
+        status.className = "go";
+
+        startButton.textContent = "React Now";
+
+        playLightsOut();
+      }
+
+      /* =========================================================
+   REACTION
+========================================================= */
+
+      function react() {
+        /*
+    False start
+  */
+
+        if (state === "countdown" || state === "waiting") {
+          falseStart();
+
+          return;
+        }
+
+        /*
+    Ignore if not ready
+  */
+
+        if (state !== "go") {
+          return;
+        }
+
+        const time = performance.now() - lightsOutTime;
+
+        state = "finished";
+
+        reaction.textContent = formatTime(time);
+
+        reaction.classList.remove("error");
+
+        status.textContent = "";
+
+        status.className = "go";
+
+        startButton.disabled = false;
+
+        startButton.textContent = "Race Again";
+
+        /*
+    Ask name
+  */
+
+        setTimeout(() => {
+          askName(time);
+        }, 100);
+      }
+
+      /* =========================================================
+   FALSE START
+========================================================= */
+
+      function falseStart() {
+        clearInterval(columnTimer);
+
+        clearTimeout(lightsOutTimer);
+
+        columnTimer = null;
+
+        lightsOutTimer = null;
+
+        clearLights();
+
+        state = "falseStart";
+
+        reaction.textContent = "Try Again?";
+
+        reaction.classList.add("error");
+
+        status.textContent = "";
+
+        status.className = "error";
+
+        startButton.disabled = false;
+
+        startButton.textContent = "Try Again";
+
+        document.body.classList.add("flash-red");
+
+        setTimeout(() => {
+          document.body.classList.remove("flash-red");
+        }, 350);
+
+        playError();
+      }
+
+      /* =========================================================
+   FORMAT
+========================================================= */
+
+      function formatTime(ms) {
+        return (ms / 1000).toFixed(3);
+      }
+
+      /* =========================================================
+   LEADERBOARD
+========================================================= */
+
+      function getScores() {
+        try {
+          const data = localStorage.getItem(STORAGE_KEY);
+
+          if (!data) {
+            return [];
+          }
+
+          return JSON.parse(data)
+
+            .filter(
+              (item) =>
+                item &&
+                typeof item.name === "string" &&
+                typeof item.time === "number",
+            )
+
+            .sort((a, b) => a.time - b.time)
+
+            .slice(0, 5);
+        } catch {
+          return [];
+        }
+      }
+
+      /* =========================================================
+   SAVE SCORE
+========================================================= */
+
+      function saveScore(name, time) {
+        const leaderboard = getScores();
+
+        leaderboard.push({
+          name: name.trim().substring(0, 12),
+
+          time: time,
+
+          date: Date.now(),
+        });
+
+        leaderboard.sort((a, b) => a.time - b.time);
+
+        const topFive = leaderboard.slice(0, 5);
+
+        localStorage.setItem(
+          STORAGE_KEY,
+
+          JSON.stringify(topFive),
+        );
+
+        renderLeaderboard();
+      }
+
+      /* =========================================================
+   ASK NAME
+========================================================= */
+
+      function askName(time) {
+        const name = prompt(
+          `Your reaction time: ${formatTime(time)}s\n\nEnter your name or initials:`,
+          "",
+        );
+
+        if (!name || !name.trim()) {
+          return;
+        }
+
+        saveScore(name, time);
+      }
+
+      /* =========================================================
+   ESCAPE HTML
+========================================================= */
+
+      function escapeHTML(text) {
+        const div = document.createElement("div");
+
+        div.textContent = text;
+
+        return div.innerHTML;
+      }
+
+      /* =========================================================
+   RENDER LEADERBOARD
+========================================================= */
+
+      function renderLeaderboard() {
+        const leaderboard = getScores();
+
+        scores.innerHTML = "";
+
+        if (leaderboard.length === 0) {
+          scores.innerHTML = `
+
+      <div class="empty-score">
+        No times recorded yet.
+      </div>
+
+    `;
+
+          return;
+        }
+
+        leaderboard.forEach((score, index) => {
+          const row = document.createElement("div");
+
+          row.className = "score";
+
+          row.innerHTML = `
+
+        <div class="score-left">
+
+          <div class="score-rank">
+            ${index + 1}
+          </div>
+
+          <div class="score-name">
+            ${escapeHTML(score.name)}
+          </div>
+
+        </div>
+
+        <div class="score-time">
+          ${formatTime(score.time)}s
+        </div>
+
+      `;
+
+          scores.appendChild(row);
+        });
+      }
+
+      /* =========================================================
+   START BUTTON
+========================================================= */
+
+      startButton.addEventListener("click", (event) => {
+        event.stopPropagation();
+
+        startGame();
+      });
+
+      /* =========================================================
+   RESET
+========================================================= */
+
+      resetButton.addEventListener("click", (event) => {
+        event.stopPropagation();
+
+        if (confirm("Reset the leaderboard?")) {
+          localStorage.removeItem(STORAGE_KEY);
+
+          renderLeaderboard();
+        }
+      });
+
+      /* =========================================================
+   CLICK ANYWHERE TO REACT
+========================================================= */
+
+      app.addEventListener("click", (event) => {
+        if (event.target === startButton || event.target === resetButton) {
+          return;
+        }
+
+        react();
+      });
+
+      /* =========================================================
+   SPACEBAR
+========================================================= */
+
+      document.addEventListener("keydown", (event) => {
+        if (event.code !== "Space") {
+          return;
+        }
+
+        event.preventDefault();
+
+        /*
+      Space starts a new race
+    */
+
+        if (
+          state === "idle" ||
+          state === "finished" ||
+          state === "falseStart"
+        ) {
+          startGame();
+
+          return;
+        }
+
+        /*
+      Space reacts
+    */
+
+        react();
+      });
+
+      /* =========================================================
+   INITIALIZE
+========================================================= */
+
+      clearLights();
+
+      renderLeaderboard();
+    </script>
+  </body>
+</html>
