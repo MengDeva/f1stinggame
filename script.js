@@ -509,14 +509,14 @@ function saveScore(name, time) {
 ========================================================= */
 
 function askName(time) {
-  const name = prompt(
-    `Your reaction time: ${formatTime(time)}s\n\nEnter your name or initials:`,
-    "",
-  );
+  //   const name = prompt(
+  //     `Your reaction time: ${formatTime(time)}s\n\nEnter your name or initials:`,
+  //     "",
+  //   );
 
-  if (!name || !name.trim()) {
-    return;
-  }
+  //   if (!name || !name.trim()) {
+  //     return;
+  //   }
 
   saveScore(name, time);
 }
