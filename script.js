@@ -874,16 +874,16 @@ function renderModalLeaderboard() {
         tracking-[1.5px]
         text-gray-600
       ">
-        Driver ${String(index + 1).padStart(2, "0")}
+        Driver 
       </div>
     `;
-
+    // ${String(index + 1).padStart(2, "0")}
     // TIME
 
     const time = document.createElement("div");
 
     time.className = `
-      font-mono
+      font-sans
       text-base
       font-black
       ${index === 0 ? "text-yellow-400" : "text-gray-300"}
